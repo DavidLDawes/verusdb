@@ -1,0 +1,10 @@
+INSERT INTO block SET anchor="$anchor", bits="$bits", blocktype="$blocktype", chainwork="$chainwork",
+    confirmation=$confirmation, difficulty=$difficulty, finalsaplingroot="$finalsaplingroot",
+    hash="$hash", height=$height, merkleroot="$merkleroot", nextblockhash="$nextblockhash", nonce="$nonce",
+    previousblockhash="$previousblockhash", saplingchainValue=$saplingchainValue,
+    saplingchainValueZat=$saplingchainValueZat, saplingmonitored=$saplingMonitored,
+    saplingvalueDelta=$saplingvalueDelta, saplingvalueDeltaZat=$saplingvalueDeltaZat, segid=$segid,
+    size=$size, solution="$solution", sproutchainValue=$sproutchainValue,
+    sproutchainValueZat=$sproutchainValueZat, sproutmonitored=$sproutMonitored,
+    sproutvalueDelta=$sproutvalueDelta, sproutvalueDeltaZat=$sproutvalueDeltaZat, time="$time",
+    version=$version;
