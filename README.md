@@ -76,8 +76,8 @@ The above gant privileges is generous for the verus DB as long as vrscusr is on 
 GRANT ALL PRIVILEGES ON verus.* TO 'vrscusr'@'172.10.1.14' IDENTIFIED BY 'vrscusrpassword';
 ```
 
-## Python
-The utility runs in python and wraps the SQL code in pyodbc wrapping ODBC for mySQL.
+## Python App
+The utility runs in python and wraps the SQL code in pyodbc wrapping ODBC for mySQL. It executes assorted verus commands which are passed to the komodod daemon, with the responses process by the Python code and persisted in the database as block and tx records.
 
 ### Requirements: python 2.7
 This was written for python 2.7. Should mostly workj with 3.x, except maybe the prints? Possibly the execs?
@@ -90,3 +90,37 @@ You will need to get the pyodbc Python ODBC package installed using pip.
 
 ### Requirements: Create Tables
 You can use the createTables() method to get the block and tx tables in the verus database created properly. Once created you can comment the createTables() call out.
+
+### Requirements: verusd/komodod Running
+The Verus enhanced komodod daemon must be running and it must have caught up with processing the current chain so that it responds to komodo-cli commands (which are wrapped in the verus bash shell script) properly.
+
+### Requirements: verusd/komodod Location
+The exec command uses an explicit path to the verus shell command. You are likely to need to edit that so that it points to where you've installed the verus and komodod files.
+
+This should all work under Windows with a bit of fiddling; I have not tried. Directories change and exec details might as well.
+# Gather Data
+When you run the python scipt
+```
+python read-chain.py
+```
+It will attempt to get the total number of blocks from komodod via a verus command line. If it gets a successful result it shows the block height returned (we are currently above 300,000) and goes into silent loop getting blocks one at a time, writing the blocks and their transaction details to the block and tx tables respectively.
+
+This is a slow process, so leave it running over night and it should be done the next morning (at least as of Winter 2018, anyway).
+
+# Missing Features
+Sure needs work
+
+## Incremental Input
+Need to check the highest height in the DB and only update new data by default.
+
+## Quality Control
+Not terribly robust, it most likely has bugs. It still has POST oriented code that is useless without the Spring boot stuff it was built for and so on. Could use cleaning and commenting.
+
+## Wallet Details
+Adding wallet details, we can have the tool include the details of where your transactions tie in and how much changed hands in those transactions.
+
+## Naive User Management
+User account and password for the SQL client is checked in. Needs to be manually replaced for each use.
+
+# The Usual Heads Up
+This software is not warrantied or even well tested, so use it at your own risk. This software is not supported in any manner other than the whim of it's creator. Feel free to use it for anything you want, but don't blame me if it has problems. I warned you!
