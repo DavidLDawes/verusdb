@@ -96,6 +96,273 @@ The Verus enhanced komodod daemon must be running and it must have caught up wit
 
 ### Requirements: verusd/komodod Location
 The exec command uses an explicit path to the verus shell command. You are likely to need to edit that so that it points to where you've installed the verus and komodod files.
+def importblocks():
+    # open the file
+    sqlfilein = open('/home/virtualsoundnw/PycharmProjects/vrscdb/sql-block.template')
+
+    # read it & close it
+    sqltemplate = Template(sqlfilein.read())
+    sqlfilein.close()
+
+    # repeat as needed
+    sqlfileNoPrevious = open('/home/virtualsoundnw/PycharmProjects/vrscdb/sql-block-no-previous.template')
+    sqltemplateNoPrevious = Template(sqlfileNoPrevious.read())
+    sqlfileNoPrevious.close()
+
+    # as
+    sqlfileNoNext = open('/home/virtualsoundnw/PycharmProjects/vrscdb/sql-block-no-next.template')
+    sqltemplateNoNext = Template(sqlfileNoNext.read())
+    sqlfileNoNext.close()
+
+    # needed
+    sqlfileTx = open('/home/virtualsoundnw/PycharmProjects/vrscdb/sql-tx.template')
+    sqltemplateTx = Template(sqlfileTx.read())
+    sqlfileTx.close()
+
+    droptables(cursor, cnxn)
+    createtables(cursor, cnxn)
+
+    # templates set, what's the current block height?
+    blocks = getblockcount()
+    print "Current block height is " + str(blocks)
+
+    # Missing 0, unfortunately
+    i = 0
+    # should be i < blocks except it is already a quarter million
+    # So when testing use the small version here:
+    #while i < 2:
+    while i < blocks:
+        nxtTemplate = sqltemplate
+        block = getblock(i)
+        blockdict = {
+            "anchor": block["anchor"],
+            "bits": block["bits"],
+            "blocktype": block["blocktype"].upper(),
+            "chainwork": block["chainwork"],
+            "confirmation": block["confirmations"],
+            "difficulty": block["difficulty"],
+            "finalsaplingroot": block["finalsaplingroot"],
+            "hash": block["hash"],
+            "height": block["height"],
+            "merkleroot": block["merkleroot"],
+            "nonce": block["nonce"],
+            "segid": block["segid"],
+            "size": block["size"],
+            "solution": block["solution"],
+            "time": datetime.datetime.fromtimestamp(block["time"]).strftime("%Y-%m-%d %H:%M:%S"),
+            "tx": block["tx"],
+            "version": block["version"]
+        }
+
+        if "nextblockhash" in block:
+            blockdict["nextblockhash"] = block["nextblockhash"]
+        else:
+            nxtTemplate = sqltemplateNoNext
+
+        if "previousblockhash" in block:
+            blockdict["previousblockhash"] = block["previousblockhash"]
+        else:
+            nxtTemplate = sqltemplateNoPrevious
+
+        blockdict = setpools(block, blockdict)
+
+        # Go get a bearer token from the JHipster UI, under Administration/API use "Try it out" for a blodef importblocks():
+    # open the file
+    sqlfilein = open('/home/virtualsoundnw/PycharmProjects/vrscdb/sql-block.template')
+
+    # read it & close it
+    sqltemplate = Template(sqlfilein.read())
+    sqlfilein.close()
+
+    # repeat as needed
+    sqlfileNoPrevious = open('/home/virtualsoundnw/PycharmProjects/vrscdb/sql-block-no-previous.template')
+    sqltemplateNoPrevious = Template(sqlfileNoPrevious.read())
+    sqlfileNoPrevious.close()
+
+    # as
+    sqlfileNoNext = open('/home/virtualsoundnw/PycharmProjects/vrscdb/sql-block-no-next.template')
+    sqltemplateNoNext = Template(sqlfileNoNext.read())
+    sqlfileNoNext.close()
+
+    # needed
+    sqlfileTx = open('/home/virtualsoundnw/PycharmProjects/vrscdb/sql-tx.template')
+    sqltemplateTx = Template(sqlfileTx.read())
+    sqlfileTx.close()
+
+    droptables(cursor, cnxn)
+    createtables(cursor, cnxn)
+
+    # templates set, what's the current block height?
+    blocks = getblockcount()
+    print "Current block height is " + str(blocks)
+
+    # Missing 0, unfortunately
+    i = 0
+    # should be i < blocks except it is already a quarter million
+    # So when testing use the small version here:
+    #while i < 2:
+    while i < blocks:
+        nxtTemplate = sqltemplate
+        block = getblock(i)
+        blockdict = {
+            "anchor": block["anchor"],
+            "bits": block["bits"],
+            "blocktype": block["blocktype"].upper(),
+            "chainwork": block["chainwork"],
+            "confirmation": block["confirmations"],
+            "difficulty": block["difficulty"],
+            "finalsaplingroot": block["finalsaplingroot"],
+            "hash": block["hash"],
+            "height": block["height"],
+            "merkleroot": block["merkleroot"],
+            "nonce": block["nonce"],
+            "segid": block["segid"],
+            "size": block["size"],
+            "solution": block["solution"],
+            "time": datetime.datetime.fromtimestamp(block["time"]).strftime("%Y-%m-%d %H:%M:%S"),
+            "tx": block["tx"],
+            "version": block["version"]
+        }
+
+        if "nextblockhash" in block:
+            blockdict["nextblockhash"] = block["nextblockhash"]
+        else:
+            nxtTemplate = sqltemplateNoNext
+
+        if "previousblockhash" in block:
+            blockdict["previousblockhash"] = block["previousblockhash"]
+        else:
+            nxtTemplate = sqltemplateNoPrevious
+
+        blockdict = setpools(block, blockdict)
+
+        # Go get a bearer token from the JHipster UI, under Administration/API use "Try it out" for a block or a Tx and
+        # grab the token from there. They are transient, so get a new one each session.
+        blockdict["bearer"] = bearer
+        nextblock = nxtTemplate.substitute(blockdict)
+
+        #print "Next block: %s" % str(nextblock)
+        dbblock(nextblock, cnxn, cursor)
+        for tx in block["tx"]:
+            txdict = {
+                "tx": tx,
+                "height": block["height"]
+            }
+            nexttx = sqltemplateTx.substitute(txdict)
+            #print "Next Tx: " + nexttx
+            #posttx(nexttx)
+            dbtx(nexttx, cnxn, cursor)
+        i = i + 1
+
+
+ck or a Tx and
+        # grab the token from there. They are transient, so get a new one each session.
+        blockdict["bearer"] = bearer
+        nextblock = nxtTemplate.substitute(blockdict)
+
+        #print "Next block: %s" % str(nextblock)
+        dbblock(nextblock, cnxn, cursor)
+        for tx in block["tx"]:
+            txdict = {
+                "tx": tx,
+                "height": block["height"]
+            }
+            nexttx = sqltemplateTx.substitute(txdict)
+            #print "Next Tx: " + nexttxdef importblocks():
+    # open the file
+    sqlfilein = open('/home/virtualsoundnw/PycharmProjects/vrscdb/sql-block.template')
+
+    # read it & close it
+    sqltemplate = Template(sqlfilein.read())
+    sqlfilein.close()
+
+    # repeat as needed
+    sqlfileNoPrevious = open('/home/virtualsoundnw/PycharmProjects/vrscdb/sql-block-no-previous.template')
+    sqltemplateNoPrevious = Template(sqlfileNoPrevious.read())
+    sqlfileNoPrevious.close()
+
+    # as
+    sqlfileNoNext = open('/home/virtualsoundnw/PycharmProjects/vrscdb/sql-block-no-next.template')
+    sqltemplateNoNext = Template(sqlfileNoNext.read())
+    sqlfileNoNext.close()
+
+    # needed
+    sqlfileTx = open('/home/virtualsoundnw/PycharmProjects/vrscdb/sql-tx.template')
+    sqltemplateTx = Template(sqlfileTx.read())
+    sqlfileTx.close()
+
+    droptables(cursor, cnxn)
+    createtables(cursor, cnxn)
+
+    # templates set, what's the current block height?
+    blocks = getblockcount()
+    print "Current block height is " + str(blocks)
+
+    # Missing 0, unfortunately
+    i = 0
+    # should be i < blocks except it is already a quarter million
+    # So when testing use the small version here:
+    #while i < 2:
+    while i < blocks:
+        nxtTemplate = sqltemplate
+        block = getblock(i)
+        blockdict = {
+            "anchor": block["anchor"],
+            "bits": block["bits"],
+            "blocktype": block["blocktype"].upper(),
+            "chainwork": block["chainwork"],
+            "confirmation": block["confirmations"],
+            "difficulty": block["difficulty"],
+            "finalsaplingroot": block["finalsaplingroot"],
+            "hash": block["hash"],
+            "height": block["height"],
+            "merkleroot": block["merkleroot"],
+            "nonce": block["nonce"],
+            "segid": block["segid"],
+            "size": block["size"],
+            "solution": block["solution"],
+            "time": datetime.datetime.fromtimestamp(block["time"]).strftime("%Y-%m-%d %H:%M:%S"),
+            "tx": block["tx"],
+            "version": block["version"]
+        }
+
+        if "nextblockhash" in block:
+            blockdict["nextblockhash"] = block["nextblockhash"]
+        else:
+            nxtTemplate = sqltemplateNoNext
+
+        if "previousblockhash" in block:
+            blockdict["previousblockhash"] = block["previousblockhash"]
+        else:
+            nxtTemplate = sqltemplateNoPrevious
+
+        blockdict = setpools(block, blockdict)
+
+        # Go get a bearer token from the JHipster UI, under Administration/API use "Try it out" for a block or a Tx and
+        # grab the token from there. They are transient, so get a new one each session.
+        blockdict["bearer"] = bearer
+        nextblock = nxtTemplate.substitute(blockdict)
+
+        #print "Next block: %s" % str(nextblock)
+        dbblock(nextblock, cnxn, cursor)
+        for tx in block["tx"]:
+            txdict = {
+                "tx": tx,
+                "height": block["height"]
+            }
+            nexttx = sqltemplateTx.substitute(txdict)
+            #print "Next Tx: " + nexttx
+            #posttx(nexttx)
+            dbtx(nexttx, cnxn, cursor)
+        i = i + 1
+
+
+
+            #posttx(nexttx)
+            dbtx(nexttx, cnxn, cursor)
+        i = i + 1
+
+
 
 This should all work under Windows with a bit of fiddling; I have not tried. Directories change and exec details might as well.
 # Gather Data
@@ -123,4 +390,4 @@ Adding wallet details, we can have the tool include the details of where your tr
 User account and password for the SQL client is checked in. Needs to be manually replaced for each use.
 
 # The Usual Heads Up
-This software is not warrantied or even well tested, so use it at your own risk. This software is not supported in any manner other than the whim of it's creator. Feel free to use it for anything you want, but don't blame me if it has problems. I warned you!
+This software is not warrantied or even well tested, so use it at your own risk. This software is not supported in any manner other than the whim of its creator. Feel free to use it for anything you want, but don't blame me if it has problems. I warned you!
