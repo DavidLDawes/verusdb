@@ -58,9 +58,9 @@ mysql>
 We need to create the verus database, then create a user and password pair and allow that user to access the database. The following commands are from inside of the mysql client, as indicated by the mysql> prompt.
 #### Create Database & Grant Privileges
 ```
-mysql>  CREATE DATABASE `verus1` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+mysql> CREATE DATABASE `verus1` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 Query OK, 1 row affected (0.00 sec)
-GRANT ALL PRIVILEGES ON verus.* TO 'vrscusr'@'localhost' IDENTIFIED BY 'vrscusrpassword';
+mysql> GRANT ALL PRIVILEGES ON verus.* TO 'vrscusr'@'localhost' IDENTIFIED BY 'vrscusrpassword';
 
 ```
 
