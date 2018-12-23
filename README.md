@@ -96,286 +96,96 @@ The Verus enhanced komodod daemon must be running and it must have caught up wit
 
 ### Requirements: verusd/komodod Location
 The exec command uses an explicit path to the verus shell command. You are likely to need to edit that so that it points to where you've installed the verus and komodod files.
-def importblocks():
-    # open the file
-    sqlfilein = open('/home/virtualsoundnw/PycharmProjects/vrscdb/sql-block.template')
-
-    # read it & close it
-    sqltemplate = Template(sqlfilein.read())
-    sqlfilein.close()
-
-    # repeat as needed
-    sqlfileNoPrevious = open('/home/virtualsoundnw/PycharmProjects/vrscdb/sql-block-no-previous.template')
-    sqltemplateNoPrevious = Template(sqlfileNoPrevious.read())
-    sqlfileNoPrevious.close()
-
-    # as
-    sqlfileNoNext = open('/home/virtualsoundnw/PycharmProjects/vrscdb/sql-block-no-next.template')
-    sqltemplateNoNext = Template(sqlfileNoNext.read())
-    sqlfileNoNext.close()
-
-    # needed
-    sqlfileTx = open('/home/virtualsoundnw/PycharmProjects/vrscdb/sql-tx.template')
-    sqltemplateTx = Template(sqlfileTx.read())
-    sqlfileTx.close()
-
-    droptables(cursor, cnxn)
-    createtables(cursor, cnxn)
-
-    # templates set, what's the current block height?
-    blocks = getblockcount()
-    print "Current block height is " + str(blocks)
-
-    # Missing 0, unfortunately
-    i = 0
-    # should be i < blocks except it is already a quarter million
-    # So when testing use the small version here:
-    #while i < 2:
-    while i < blocks:
-        nxtTemplate = sqltemplate
-        block = getblock(i)
-        blockdict = {
-            "anchor": block["anchor"],
-            "bits": block["bits"],
-            "blocktype": block["blocktype"].upper(),
-            "chainwork": block["chainwork"],
-            "confirmation": block["confirmations"],
-            "difficulty": block["difficulty"],
-            "finalsaplingroot": block["finalsaplingroot"],
-            "hash": block["hash"],
-            "height": block["height"],
-            "merkleroot": block["merkleroot"],
-            "nonce": block["nonce"],
-            "segid": block["segid"],
-            "size": block["size"],
-            "solution": block["solution"],
-            "time": datetime.datetime.fromtimestamp(block["time"]).strftime("%Y-%m-%d %H:%M:%S"),
-            "tx": block["tx"],
-            "version": block["version"]
-        }
-
-        if "nextblockhash" in block:
-            blockdict["nextblockhash"] = block["nextblockhash"]
-        else:
-            nxtTemplate = sqltemplateNoNext
-
-        if "previousblockhash" in block:
-            blockdict["previousblockhash"] = block["previousblockhash"]
-        else:
-            nxtTemplate = sqltemplateNoPrevious
-
-        blockdict = setpools(block, blockdict)
-
-        # Go get a bearer token from the JHipster UI, under Administration/API use "Try it out" for a blodef importblocks():
-    # open the file
-    sqlfilein = open('/home/virtualsoundnw/PycharmProjects/vrscdb/sql-block.template')
-
-    # read it & close it
-    sqltemplate = Template(sqlfilein.read())
-    sqlfilein.close()
-
-    # repeat as needed
-    sqlfileNoPrevious = open('/home/virtualsoundnw/PycharmProjects/vrscdb/sql-block-no-previous.template')
-    sqltemplateNoPrevious = Template(sqlfileNoPrevious.read())
-    sqlfileNoPrevious.close()
-
-    # as
-    sqlfileNoNext = open('/home/virtualsoundnw/PycharmProjects/vrscdb/sql-block-no-next.template')
-    sqltemplateNoNext = Template(sqlfileNoNext.read())
-    sqlfileNoNext.close()
-
-    # needed
-    sqlfileTx = open('/home/virtualsoundnw/PycharmProjects/vrscdb/sql-tx.template')
-    sqltemplateTx = Template(sqlfileTx.read())
-    sqlfileTx.close()
-
-    droptables(cursor, cnxn)
-    createtables(cursor, cnxn)
-
-    # templates set, what's the current block height?
-    blocks = getblockcount()
-    print "Current block height is " + str(blocks)
-
-    # Missing 0, unfortunately
-    i = 0
-    # should be i < blocks except it is already a quarter million
-    # So when testing use the small version here:
-    #while i < 2:
-    while i < blocks:
-        nxtTemplate = sqltemplate
-        block = getblock(i)
-        blockdict = {
-            "anchor": block["anchor"],
-            "bits": block["bits"],
-            "blocktype": block["blocktype"].upper(),
-            "chainwork": block["chainwork"],
-            "confirmation": block["confirmations"],
-            "difficulty": block["difficulty"],
-            "finalsaplingroot": block["finalsaplingroot"],
-            "hash": block["hash"],
-            "height": block["height"],
-            "merkleroot": block["merkleroot"],
-            "nonce": block["nonce"],
-            "segid": block["segid"],
-            "size": block["size"],
-            "solution": block["solution"],
-            "time": datetime.datetime.fromtimestamp(block["time"]).strftime("%Y-%m-%d %H:%M:%S"),
-            "tx": block["tx"],
-            "version": block["version"]
-        }
-
-        if "nextblockhash" in block:
-            blockdict["nextblockhash"] = block["nextblockhash"]
-        else:
-            nxtTemplate = sqltemplateNoNext
-
-        if "previousblockhash" in block:
-            blockdict["previousblockhash"] = block["previousblockhash"]
-        else:
-            nxtTemplate = sqltemplateNoPrevious
-
-        blockdict = setpools(block, blockdict)
-
-        # Go get a bearer token from the JHipster UI, under Administration/API use "Try it out" for a block or a Tx and
-        # grab the token from there. They are transient, so get a new one each session.
-        blockdict["bearer"] = bearer
-        nextblock = nxtTemplate.substitute(blockdict)
-
-        #print "Next block: %s" % str(nextblock)
-        dbblock(nextblock, cnxn, cursor)
-        for tx in block["tx"]:
-            txdict = {
-                "tx": tx,
-                "height": block["height"]
-            }
-            nexttx = sqltemplateTx.substitute(txdict)
-            #print "Next Tx: " + nexttx
-            #posttx(nexttx)
-            dbtx(nexttx, cnxn, cursor)
-        i = i + 1
-
-
-ck or a Tx and
-        # grab the token from there. They are transient, so get a new one each session.
-        blockdict["bearer"] = bearer
-        nextblock = nxtTemplate.substitute(blockdict)
-
-        #print "Next block: %s" % str(nextblock)
-        dbblock(nextblock, cnxn, cursor)
-        for tx in block["tx"]:
-            txdict = {
-                "tx": tx,
-                "height": block["height"]
-            }
-            nexttx = sqltemplateTx.substitute(txdict)
-            #print "Next Tx: " + nexttxdef importblocks():
-    # open the file
-    sqlfilein = open('/home/virtualsoundnw/PycharmProjects/vrscdb/sql-block.template')
-
-    # read it & close it
-    sqltemplate = Template(sqlfilein.read())
-    sqlfilein.close()
-
-    # repeat as needed
-    sqlfileNoPrevious = open('/home/virtualsoundnw/PycharmProjects/vrscdb/sql-block-no-previous.template')
-    sqltemplateNoPrevious = Template(sqlfileNoPrevious.read())
-    sqlfileNoPrevious.close()
-
-    # as
-    sqlfileNoNext = open('/home/virtualsoundnw/PycharmProjects/vrscdb/sql-block-no-next.template')
-    sqltemplateNoNext = Template(sqlfileNoNext.read())
-    sqlfileNoNext.close()
-
-    # needed
-    sqlfileTx = open('/home/virtualsoundnw/PycharmProjects/vrscdb/sql-tx.template')
-    sqltemplateTx = Template(sqlfileTx.read())
-    sqlfileTx.close()
-
-    droptables(cursor, cnxn)
-    createtables(cursor, cnxn)
-
-    # templates set, what's the current block height?
-    blocks = getblockcount()
-    print "Current block height is " + str(blocks)
-
-    # Missing 0, unfortunately
-    i = 0
-    # should be i < blocks except it is already a quarter million
-    # So when testing use the small version here:
-    #while i < 2:
-    while i < blocks:
-        nxtTemplate = sqltemplate
-        block = getblock(i)
-        blockdict = {
-            "anchor": block["anchor"],
-            "bits": block["bits"],
-            "blocktype": block["blocktype"].upper(),
-            "chainwork": block["chainwork"],
-            "confirmation": block["confirmations"],
-            "difficulty": block["difficulty"],
-            "finalsaplingroot": block["finalsaplingroot"],
-            "hash": block["hash"],
-            "height": block["height"],
-            "merkleroot": block["merkleroot"],
-            "nonce": block["nonce"],
-            "segid": block["segid"],
-            "size": block["size"],
-            "solution": block["solution"],
-            "time": datetime.datetime.fromtimestamp(block["time"]).strftime("%Y-%m-%d %H:%M:%S"),
-            "tx": block["tx"],
-            "version": block["version"]
-        }
-
-        if "nextblockhash" in block:
-            blockdict["nextblockhash"] = block["nextblockhash"]
-        else:
-            nxtTemplate = sqltemplateNoNext
-
-        if "previousblockhash" in block:
-            blockdict["previousblockhash"] = block["previousblockhash"]
-        else:
-            nxtTemplate = sqltemplateNoPrevious
-
-        blockdict = setpools(block, blockdict)
-
-        # Go get a bearer token from the JHipster UI, under Administration/API use "Try it out" for a block or a Tx and
-        # grab the token from there. They are transient, so get a new one each session.
-        blockdict["bearer"] = bearer
-        nextblock = nxtTemplate.substitute(blockdict)
-
-        #print "Next block: %s" % str(nextblock)
-        dbblock(nextblock, cnxn, cursor)
-        for tx in block["tx"]:
-            txdict = {
-                "tx": tx,
-                "height": block["height"]
-            }
-            nexttx = sqltemplateTx.substitute(txdict)
-            #print "Next Tx: " + nexttx
-            #posttx(nexttx)
-            dbtx(nexttx, cnxn, cursor)
-        i = i + 1
-
-
-
-            #posttx(nexttx)
-            dbtx(nexttx, cnxn, cursor)
-        i = i + 1
-
-
 
 This should all work under Windows with a bit of fiddling; I have not tried. Directories change and exec details might as well.
+
 # Gather Data
-When you run the python scipt
+When you run the python scipt it execs commands to get data from komodod then writes the results out to database tables. The basic command is:
 ```
 python read-chain.py
 ```
-It will attempt to get the total number of blocks from komodod via a verus command line. If it gets a successful result it shows the block height returned (we are currently above 300,000) and goes into silent loop getting blocks one at a time, writing the blocks and their transaction details to the block and tx tables respectively.
+The importblocks() function will attempt to get the total number of blocks from komodod via a verus command line. If it gets a successful result it shows the block height returned (we are currently above 300,000) and goes into silent loop getting blocks one at a time, writing the blocks and their transaction details to the block and tx tables respectively.
 
 This is a slow process, so leave it running over night and it should be done the next morning (at least as of Winter 2018, anyway).
 
+The importaddress() function gets all addresses from the wallet and gets details for each, including the transactions and their details, writing the results to database tables. This bit is a work in progress (another way of saying it does not work yet).
+
 # Missing Features
 Sure needs work
+
+## Import Address
+Started on this. It needs to use ```verus listreceivedbyaddress``` first to get the array of addresses. Each one has amount, confirmations, and a txids array. Here's an example:
+```
+{
+    "address": "RYMEmJkPVpwhvRBWbzLqMfq5CwaNQxsPXr",
+    "account": "",
+    "amount": 15.00000000,
+    "confirmations": 274852,
+    "txids": [
+      "22bd06d45515ea5c8e15154c32ef332e4720ac003a0cdb1f3ff46bb0acd3017f",
+      "66b97e47bfe7fe55dba2369aeda9aa76576c74ad873940628c3c2135c49787d1",
+      "95886640979f683c7887c6f31eda94823c885c51f07ce73f7353448b2201cef5"
+    ]
+}
+```
+From that we can get the raw transaction data. This only works for transactions that have addresses in our wallet, so the global list of all transactions we built as we processed all the blocks mostly is inaccessible. By using the results of the listbyreceiveaddress for our source of transactions we are guaranteeing these all have the keys in our wallet so the raw data is available.
+
+Getting an individual tx's raw data via txid (like the first one in the example above, that starts with 22bd06...) looks like 
+```
+verus getrawtransaction "22bd06d45515ea5c8e15154c32ef332e4720ac003a0cdb1f3ff46bb0acd3017f" 1|more
+{
+  "hex": "0100000001d18797c435213c8c62403987ad746c5776aaa9ed9a36a2db55fee7bf477eb966080000006a473044022040333eb53327940ee6b7942342e6a7a6e88e50bf668f1e49ae4c770e33f53462022051c06612c2db6541f96a56a15544aa6a
+3a0fd3e9ab4341d38e3a99172c3594a101210211c825fd1848225530774630caff40e1c3805f75be5defc56eca693d1c8bda33ffffffff010065cd1d000000001976a914fd0ecc90162a89ef432a288243380bd5371786f188ac00000000",
+  "txid": "22bd06d45515ea5c8e15154c32ef332e4720ac003a0cdb1f3ff46bb0acd3017f",
+  "overwintered": false,
+  "version": 1,
+  "locktime": 0,
+  "vin": [
+    {
+      "txid": "66b97e47bfe7fe55dba2369aeda9aa76576c74ad873940628c3c2135c49787d1",
+      "vout": 8,
+      "address": "RYMEmJkPVpwhvRBWbzLqMfq5CwaNQxsPXr",
+      "scriptSig": {
+        "asm": "3044022040333eb53327940ee6b7942342e6a7a6e88e50bf668f1e49ae4c770e33f53462022051c06612c2db6541f96a56a15544aa6a3a0fd3e9ab4341d38e3a99172c3594a1[ALL] 0211c825fd1848225530774630caff40e1c3805f75
+be5defc56eca693d1c8bda33",
+        "hex": "473044022040333eb53327940ee6b7942342e6a7a6e88e50bf668f1e49ae4c770e33f53462022051c06612c2db6541f96a56a15544aa6a3a0fd3e9ab4341d38e3a99172c3594a101210211c825fd1848225530774630caff40e1c3805f75
+be5defc56eca693d1c8bda33"
+      },
+      "value": 5.00000000,
+      "valueSat": 500000000,
+      "address": "RYMEmJkPVpwhvRBWbzLqMfq5CwaNQxsPXr",
+      "sequence": 4294967295
+    }
+  ],
+  "vout": [
+    {
+      "value": 5.00000000,
+      "valueSat": 500000000,
+      "n": 0,
+      "scriptPubKey": {
+        "asm": "OP_DUP OP_HASH160 fd0ecc90162a89ef432a288243380bd5371786f1 OP_EQUALVERIFY OP_CHECKSIG",
+        "hex": "76a914fd0ecc90162a89ef432a288243380bd5371786f188ac",
+        "reqSigs": 1,
+        "type": "pubkeyhash",
+        "addresses": [
+          "RYMEmJkPVpwhvRBWbzLqMfq5CwaNQxsPXr"
+        ]
+      },
+      "spentTxId": "95886640979f683c7887c6f31eda94823c885c51f07ce73f7353448b2201cef5",
+      "spentIndex": 0,
+      "spentHeight": 26819
+    }
+  ],
+  "vjoinsplit": [
+  ],
+  "blockhash": "f98dcd05ec58fa3172b82397532e211ad2af8b9f009ba4c7689e6b9128198b20",
+  "height": 24770,
+  "confirmations": 276918,
+  "time": 1528401533,
+  "blocktime": 1528401533
+}
+```
+Note the vin, vout and vjoinsplit arrays.
 
 ## Incremental Input
 Need to check the highest height in the DB and only update new data by default.
