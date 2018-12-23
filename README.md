@@ -17,7 +17,7 @@ You'll need at least the following settings to run properly:
 ```
 
 **Map conainer DB files**
-Create the direcory ```mkdir ~/mysql.data```
+Create the directory ```mkdir ~/mysql.data```
 Then use the directory in the docker volume setting:
 ```
 -v ~/mysql.data:/var/lib/mysql
